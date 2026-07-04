@@ -1,3 +1,25 @@
 spring:
   application:
-    name: demo
+    name: Sergiu-AI MCP Server
+  ai:
+    mcp:
+      server:
+        name: Sergiu-AI MCP Server
+        version: 0.1.1
+        protocol: streamable
+        stdio: false
+        type: sync
+mcp:
+  security:
+    api-key: ${MCP_API_KEY:dev-local-key}
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health, info, metrics, env, loggers, mappings, beans
+  endpoint:
+    health:
+      show-details: always
+  info:
+    env:
+      enabled: true

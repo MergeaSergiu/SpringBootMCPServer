@@ -1,0 +1,16 @@
+[Unit]
+Description=Sergiu-AI MCP Server
+After=network.target
+
+[Service]
+User=ec2-user
+WorkingDirectory=/opt/mcp
+# Replace with a strong secret before starting (see DEPLOY.md).
+Environment=MCP_API_KEY=REPLACE_WITH_A_STRONG_SECRET
+ExecStart=/usr/bin/java -jar /opt/mcp/app.jar
+SuccessExitStatus=143
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target
