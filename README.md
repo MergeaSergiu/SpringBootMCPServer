@@ -32,9 +32,10 @@ plain HTTP service or behind an **nginx reverse proxy with HTTPS**.
 The application is an **MCP server**. MCP is an open protocol that lets AI
 assistants call external "tools" (functions) to fetch data or perform actions.
 This server registers a handful of read-only tools that return curated knowledge
-about **SailPoint** (identity security / IGA) and its **IdentityIQ certification
-types**. An AI client connected to the server can call these tools to answer user
-questions accurately instead of relying on the model's memory.
+about **SailPoint** (identity security / IGA), its **IdentityIQ certification
+types**, and its **workflow types**. An AI client connected to the server can call
+these tools to answer user questions accurately instead of relying on the model's
+memory.
 
 Everything the tools return is static, curated text held in memory — there is no
 database and no outbound call to SailPoint. The value is in exposing that
@@ -62,7 +63,7 @@ knowledge through the MCP contract so an assistant can retrieve it on demand.
 
 ## The MCP tools
 
-Two `@Component` classes register the tools via Spring AI's `@McpTool` annotation.
+Three `@Component` classes register the tools via Spring AI's `@McpTool` annotation.
 
 ### SailPoint tools (`SailPointTool`)
 
@@ -79,6 +80,15 @@ Two `@Component` classes register the tools via Spring AI's `@McpTool` annotatio
 |-----------|---------|
 | `identityiq-certification-types` | Lists IdentityIQ certification types, one-line each. Optional `limit` parameter. |
 | `identityiq-certification-details` | Full description of one certification type by id (e.g. `manager`, `targeted`). |
+
+### Workflow tools (`WorkflowTool`)
+
+| Tool name | Purpose |
+|-----------|---------|
+| `workflows-overview` | Lists SailPoint's key workflow types (e.g. `Policy Violation`, `LCM Provisioning`, `Identity Lifecycle`), one-line each. Optional `limit` parameter. |
+
+> A companion `sailpoint-workflow-details` tool (full description per workflow type)
+> is planned but not yet implemented.
 
 Each tool logs its invocation, so you can see calls in the app logs.
 
@@ -105,6 +115,7 @@ spring:
     mcp:
       server:
         name: Sergiu-AI MCP Server
+        version: 0.1.1
         protocol: streamable   # MCP streamable HTTP
         stdio: false           # HTTP transport, not stdio
         type: sync
@@ -116,6 +127,12 @@ management:
     web:
       exposure:
         include: health, info, metrics, env, loggers, mappings, beans
+  endpoint:
+    health:
+      show-details: always
+  info:
+    env:
+      enabled: true
 ```
 
 | Setting | Meaning |
@@ -317,6 +334,7 @@ demo/
 │   ├── DemoApplication.java                     # Spring Boot entrypoint
 │   ├── SailPointComponent/SailPointTool.java    # SailPoint MCP tools
 │   ├── CertificationsType/CertificationTool.java# IdentityIQ certification MCP tools
+│   ├── Workflows/WorkflowTool.java              # SailPoint workflow MCP tools
 │   └── security/ApiKeyFilter.java               # API-key filter guarding /mcp
 ├── src/main/resources/application.yaml          # app + MCP + actuator config
 ├── Dockerfile                                   # multi-stage build (Maven -> JRE 21)
