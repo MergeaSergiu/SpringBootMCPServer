@@ -9,6 +9,9 @@ spring:
         protocol: streamable
         stdio: false
         type: sync
+mcp:
+  security:
+    api-key: ${MCP_API_KEY:dev-local-key}
 management:
   endpoints:
     web:

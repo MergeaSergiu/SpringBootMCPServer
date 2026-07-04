@@ -1,0 +1,27 @@
+services:
+  app:
+    build: .                     # uses the existing Dockerfile
+    environment:
+      MCP_API_KEY: "dev-local-key"   # change to any secret you like
+    expose:
+      - "8080"                   # visible to nginx only — NOT published to host
+    networks:
+      - mcpnet
+    restart: unless-stopped
+
+  nginx:
+    image: nginx:1.27-alpine
+    ports:
+      - "80:80"                  # redirects to 443
+      - "443:443"                # the only public door
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx/certs:/etc/nginx/certs:ro
+    depends_on:
+      - app
+    networks:
+      - mcpnet
+    restart: unless-stopped
+
+networks:
+  mcpnet:
