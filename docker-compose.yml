@@ -2,7 +2,12 @@ services:
   app:
     build: .                     # uses the existing Dockerfile
     environment:
-      MCP_API_KEY: "dev-local-key"   # change to any secret you like
+      MCP_API_KEY: "dev-local-key"   # fallback only; ignored while secret-name is set
+    volumes:
+      # LOCAL TESTING ONLY — gives the container your host AWS credentials so it
+      # can read from Secrets Manager. Do NOT commit or use on EC2 (the instance
+      # role handles this there). Container runs as root -> mount to /root/.aws.
+      - "C:/Users/Mergea Sergiu/.aws:/root/.aws:ro"
     expose:
       - "8080"                   # visible to nginx only — NOT published to host
     networks:
