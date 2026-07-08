@@ -7,6 +7,13 @@ User=ec2-user
 WorkingDirectory=/opt/mcp
 # Replace with a strong secret before starting (see DEPLOY.md).
 Environment=MCP_API_KEY=REPLACE_WITH_A_STRONG_SECRET
+
+# App logging: systemd creates /var/log/mcp owned by this service user, and
+# LOGGING_FILE_NAME tells Spring Boot to write there (ECS JSON, per
+# application.yaml). The app still logs plain text to the console/journald too.
+LogsDirectory=mcp
+Environment=LOGGING_FILE_NAME=/var/log/mcp/app.log
+
 ExecStart=/usr/bin/java -jar /opt/mcp/app.jar
 SuccessExitStatus=143
 Restart=on-failure
