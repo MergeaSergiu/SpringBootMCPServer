@@ -22,13 +22,12 @@ jobs:
           java-version: "21"
           cache: maven        # caches ~/.m2 keyed on pom.xml for faster builds
 
-      - name: Build the jar
-        # Tests are skipped here because the context-load test boots the full
-        # Spring context, which (with the current application.yaml) tries to
-        # read from AWS Secrets Manager and would fail on the runner. See notes.
+      - name: Build the jar (runs tests)
+        # No AWS needed: with MCP_SECRET_NAME unset, the app falls back to
+        # dev-local-key, so the Spring context loads on the runner.
         run: |
           chmod +x mvnw
-          ./mvnw -B clean package -DskipTests
+          ./mvnw -B clean package
 
       - name: Upload the jar
         uses: actions/upload-artifact@v4
