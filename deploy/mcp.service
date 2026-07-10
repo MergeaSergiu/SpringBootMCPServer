@@ -5,8 +5,11 @@ After=network.target
 [Service]
 User=ec2-user
 WorkingDirectory=/opt/mcp
-# Replace with a strong secret before starting (see DEPLOY.md).
-Environment=MCP_API_KEY=REPLACE_WITH_A_STRONG_SECRET
+# The API key is fetched from AWS Secrets Manager via the instance role.
+# MCP_SECRET_NAME activates that path; without it the app would fall back to
+# the dev-local-key default. (MCP_API_KEY is only the local/dev fallback.)
+Environment=MCP_SECRET_NAME=mcp/api-key
+Environment=MCP_SECRET_REGION=us-east-1
 
 # App logging: systemd creates /var/log/mcp owned by this service user, and
 # LOGGING_FILE_NAME tells Spring Boot to write there (ECS JSON, per

@@ -31,3 +31,6 @@ build/
 
 ### VS Code ###
 .vscode/
+
+### Deployment (environment-specific, not committed) ###
+deploy/mcp.service
