@@ -4,10 +4,10 @@ name: Build
 # as a workflow artifact.
 on:
   push:
-    branches: ["**"]
-    tags: ["v*"]                           # also run on version tags (needed to publish images)
+    branches: [master]                     # publish from the default branch...
+    tags: ["v*"]                           # ...and on version tags (needed to publish images)
     paths-ignore: ["**.md", "docs/**"]     # don't rebuild for docs-only changes
-  pull_request:
+  pull_request:                            # feature branches are validated via their PR
     paths-ignore: ["**.md", "docs/**"]
   workflow_dispatch:      # lets you run it manually from the Actions tab
 
