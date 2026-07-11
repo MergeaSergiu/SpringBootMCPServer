@@ -5,6 +5,7 @@ name: Build
 on:
   push:
     branches: ["**"]
+    tags: ["v*"]                           # also run on version tags (needed to publish images)
     paths-ignore: ["**.md", "docs/**"]     # don't rebuild for docs-only changes
   pull_request:
     paths-ignore: ["**.md", "docs/**"]
