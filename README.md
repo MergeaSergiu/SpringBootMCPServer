@@ -22,7 +22,7 @@ Secrets Manager** and logs shipped to **AWS CloudWatch**.
 - [AWS cloud integration](#aws-cloud-integration)
   - [Secrets — AWS Secrets Manager](#secrets--aws-secrets-manager)
   - [Logging — AWS CloudWatch](#logging--aws-cloudwatch)
-- [Continuous integration (GitHub Actions)](#continuous-integration-github-actions)
+- [Continuous integration & delivery (GitHub Actions)](#continuous-integration--delivery-github-actions)
 - [Testing & rollout phases](#testing--rollout-phases)
   - [Phase 1 — Plain HTTP (app only)](#phase-1--plain-http-app-only)
   - [Phase 2 — HTTPS via nginx reverse proxy](#phase-2--https-via-nginx-reverse-proxy)
@@ -120,7 +120,7 @@ production, queryable in CloudWatch Logs Insights).
 - **Docker** (multi-stage build) + **Docker Compose**
 - **nginx 1.27-alpine** (reverse proxy)
 - **AWS** — EC2 (Amazon Linux 2023), Secrets Manager, CloudWatch, IAM instance role
-- **GitHub Actions** — CI build + test
+- **GitHub Actions** — CI (build, test) + Docker image publish to GHCR
 
 ---
 
@@ -238,16 +238,36 @@ Full agent setup (IAM policy, install, config, AL2023 `rsyslog` note) is in
 
 ---
 
-## Continuous integration (GitHub Actions)
+## Continuous integration & delivery (GitHub Actions)
 
-[`.github/workflows/build.yml`](.github/workflows/build.yml) runs on every push,
-pull request, and manual dispatch:
+[`.github/workflows/build.yml`](.github/workflows/build.yml) has two jobs:
 
-1. Checks out the code and sets up **JDK 21** (Temurin) with a Maven cache.
-2. Runs `./mvnw clean package` — **builds the jar and runs the tests**. No AWS is
-   needed: with `MCP_SECRET_NAME` unset the Spring context loads using the
-   `dev-local-key` fallback.
-3. Uploads the built jar as a downloadable artifact (`demo-jar`).
+**`build`** — checks out the code, sets up **JDK 21** (Temurin) with a Maven
+cache, runs `./mvnw clean package` (**builds the jar and runs the tests**), and
+uploads the jar as a downloadable artifact (`demo-jar`). No AWS is needed — with
+`MCP_SECRET_NAME` unset the Spring context loads using the `dev-local-key`
+fallback.
+
+**`docker`** — runs after `build` succeeds. Builds the container image from the
+multi-stage `Dockerfile` and, on the default branch or a version tag, pushes it to
+**GitHub Container Registry (GHCR)**, tagged with the commit SHA, the git tag (on
+`v*` pushes), and `latest` (on the default branch):
+
+```bash
+docker pull ghcr.io/mergeasergiu/springbootmcpserver:latest
+```
+
+**When it runs:**
+
+| Event | Build + test | Image build | Publish to GHCR |
+|-------|:---:|:---:|:---:|
+| Pull request | ✅ | ✅ | ❌ |
+| Push to `master` | ✅ | ✅ | ✅ |
+| Push tag `v*` | ✅ | ✅ | ✅ |
+| Docs-only change (`**.md`, `docs/**`) | ❌ | ❌ | ❌ |
+
+Feature branches are validated through their PR; only `master` and version tags
+publish an image.
 
 ---
 
@@ -420,13 +440,13 @@ grouped by layer.
 | **Reverse proxy / TLS** | nginx 1.27 | Terminates HTTPS, rate-limits, proxies to the app |
 | **Containers** | Docker (multi-stage), Docker Compose | Local HTTPS stack and reproducible image builds |
 | **Logging / monitoring** | AWS CloudWatch + CloudWatch agent, ECS-JSON structured logging | Ships OS and app logs off-box; queryable in Logs Insights |
-| **CI** | GitHub Actions | Builds the jar and runs tests on every push/PR |
+| **CI / CD** | GitHub Actions + GHCR | Builds & tests on push/PR; publishes the Docker image on `master`/tags |
 | **Security** | API-key filter (constant-time compare), TLS, nginx rate limiting | Defense in depth around the public endpoint |
 
 **In one sentence:** a Java 21 / Spring Boot + Spring AI MCP server, containerized
 with Docker, deployed to AWS EC2 behind nginx HTTPS, with its secret in AWS Secrets
-Manager (read via an IAM instance role), logs in AWS CloudWatch, and CI on GitHub
-Actions.
+Manager (read via an IAM instance role), logs in AWS CloudWatch, and CI/CD on
+GitHub Actions that publishes a Docker image to GHCR.
 
 ---
 
