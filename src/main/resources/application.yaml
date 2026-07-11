@@ -11,7 +11,24 @@ spring:
         type: sync
 mcp:
   security:
+    # Local dev / CI: nothing set -> falls back to dev-local-key.
     api-key: ${MCP_API_KEY:dev-local-key}
+    # When MCP_SECRET_NAME is set (on EC2, via the systemd unit) the key is
+    # fetched from AWS Secrets Manager instead. Blank here so one jar runs in
+    # any environment; the value is supplied per-environment, never baked in.
+    secret-name: ${MCP_SECRET_NAME:}
+    # Optional. Blank -> region resolves from MCP_SECRET_REGION / AWS_REGION /
+    # ~/.aws / EC2 instance metadata.
+    secret-region: ${MCP_SECRET_REGION:}
+logging:
+  # When a log file is configured (LOGGING_FILE_NAME, set on EC2 via the
+  # systemd unit) write it as ECS-format JSON so CloudWatch Logs Insights can
+  # query individual fields. Console output stays plain text, so
+  # `journalctl -u mcp` remains human-readable.
+  structured:
+    format:
+      file: ecs
+
 management:
   endpoints:
     web:
